@@ -19,9 +19,10 @@ NULL FEATURE_2,
 NULL FEATURE_3,
 NULL REVENUE_IMPACT,
 NULL LINK,
-NULL ACTIVITY_OCCURENCE,
-NULL ACTIVITY_REPEATED_AT,
-'cirium_brought_into_service' _ACTIVITY_SOURCE
+CAST(NULL AS INT) ACTIVITY_OCCURENCE,
+CAST(NULL AS TIMESTAMP) ACTIVITY_REPEATED_AT,
+'cirium_brought_into_service' _ACTIVITY_SOURCE,
+CAST(CURRENT_DATETIME() AS TIMESTAMP) AS _INSERT_DATE
 FROM AIRCRAFT_TAIL_RANKING 
 WHERE rn = 1 --only bring back the tail number most recently brought into service
 AND status != 'Cancelled' --removing any cancelled aircraft
