@@ -2,7 +2,7 @@
     materialized="incremental"
 ) }}
 
-WITH NEW_DATA AS (
+WITH COMBINED_DATA AS (
 
     -- incremental load from the cirium_brought_into_service view
     SELECT *
@@ -24,23 +24,51 @@ WITH NEW_DATA AS (
         WHERE CAST(TS AS TIMESTAMP) > (SELECT MAX(TS) FROM {{ this }} WHERE ACTIVITY = 'delivered_to_operator')
     {% endif %}
 
-),
+    UNION ALL
 
-COMBINED_DATA AS (
-
+    -- incremental load from the cirium_delivered_to_operator view
     SELECT *
-    FROM NEW_DATA
-
+    FROM {{ref('sdt_active_status')}}
+    -- code within this block is only executed on an incremental run
     {% if is_incremental() %}
+        -- this filter will only be applied on an incremental run
+        WHERE CAST(TS AS TIMESTAMP) > (SELECT MAX(TS) FROM {{ this }} WHERE ACTIVITY = 'sdt_active_status')
+    {% endif %}
 
-        -- On an incremental run, combine existing data in the model with new data
-        UNION ALL
-        SELECT * FROM {{ this }}
+    UNION ALL
 
+    -- incremental load from the cirium_delivered_to_operator view
+    SELECT *
+    FROM {{ref('sdt_terminated_status')}}
+    -- code within this block is only executed on an incremental run
+    {% if is_incremental() %}
+        -- this filter will only be applied on an incremental run
+        WHERE CAST(TS AS TIMESTAMP) > (SELECT MAX(TS) FROM {{ this }} WHERE ACTIVITY = 'sdt_terminated_status')
+    {% endif %}
+
+    UNION ALL
+
+    -- incremental load from the cirium_delivered_to_operator view
+    SELECT *
+    FROM {{ref('sdt_in_progress_status')}}
+    -- code within this block is only executed on an incremental run
+    {% if is_incremental() %}
+        -- this filter will only be applied on an incremental run
+        WHERE CAST(TS AS TIMESTAMP) > (SELECT MAX(TS) FROM {{ this }} WHERE ACTIVITY = 'sdt_in_progress_status')
+    {% endif %}
+
+    UNION ALL
+
+    -- incremental load from the cirium_delivered_to_operator view
+    SELECT *
+    FROM {{ref('sdt_suspended_status')}}
+    -- code within this block is only executed on an incremental run
+    {% if is_incremental() %}
+        -- this filter will only be applied on an incremental run
+        WHERE CAST(TS AS TIMESTAMP) > (SELECT MAX(TS) FROM {{ this }} WHERE ACTIVITY = 'sdt_suspended_status')
     {% endif %}
 
 )
-
 SELECT 
 ACTIVITY_ID,
 TS,
